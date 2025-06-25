@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Habit Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+  <div class="container mx-auto p-4 max-w-4xl">
+    <h1 class="text-3xl font-bold text-center mb-6">Habit Tracker</h1>
+    
+    <!-- Add Habit Form -->
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+      <h2 class="text-xl font-semibold mb-4">Add New Habit</h2>
+      <div class="flex gap-4">
+        <input id="habitName" type="text" placeholder="Enter habit name" class="flex-1 p-2 border rounded">
+        <button id="addHabit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Add</button>
+      </div>
+    </div>
+
+    <!-- Habit List -->
+    <div id="habitList" class="space-y-6"></div>
+  </div>
+
+  <script>
+    // Load habits from localStorage or initialize empty array
+    let habits = JSON.parse(localStorage.getItem('habits')) || [];
+
+    // Save habits to localStorage
+    function saveHabits() {
+      localStorage.setItem('habits', JSON.stringify(habits));
+    }
+
+    // Get array of past 30 days
+    function getPastDays() {
+      const days = [];
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        days.push(date);
+      }
+      return days;
+    }
+
+    // Render habits
+    function renderHabits() {
+      const habitList = document.getElementById('habitList');
+      habitList.innerHTML = '';
+      const days = getPastDays();
+
+      habits.forEach((habit, index) => {
+        const habitDiv = document.createElement('div');
+        habitDiv.className = 'bg-white p-6 rounded-lg shadow-md';
+
+        // Habit name and controls
+        const habitHeader = document.createElement('div');
+        habitHeader.className = 'flex justify-between items-center mb-4';
+        habitHeader.innerHTML = `
+          <h3 class="text-lg font-semibold">${habit.name}</h3>
+          <div class="flex gap-2">
+            <button onclick="markToday(${index})" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">Mark Today</button>
+            <button onclick="deleteHabit(${index})" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Delete</button>
+          </div>
+        `;
+
+        // Habit grid
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-10 gap-1';
+        days.forEach(day => {
+          const dayStr = day.toDateString();
+          const dayDiv = document.createElement('div');
+          dayDiv.className = `w-8 h-8 rounded-sm border flex items-center justify-center text-xs ${
+            habit.completedDays && habit.completedDays.includes(dayStr) ? 'bg-green-500 text-white' : 'bg-gray-200'
+          }`;
+          dayDiv.textContent = day.getDate();
+          dayDiv.title = dayStr;
+          grid.appendChild(dayDiv);
+        });
+
+        habitDiv.appendChild(habitHeader);
+        habitDiv.appendChild(grid);
+        habitList.appendChild(habitDiv);
+      });
+    }
+
+    // Add new habit
+    document.getElementById('addHabit').addEventListener('click', () => {
+      const habitName = document.getElementById('habitName').value.trim();
+      if (habitName) {
+        habits.push({ name: habitName, completedDays: [] });
+        saveHabits();
+        renderHabits();
+        document.getElementById('habitName').value = '';
+      }
+    });
+
+    // Mark today as complete
+    window.markToday = function(index) {
+      const today = new Date().toDateString();
+      if (!habits[index].completedDays) {
+        habits[index].completedDays = [];
+      }
+      if (!habits[index].completedDays.includes(today)) {
+        habits[index].completedDays.push(today);
+        saveHabits();
+        renderHabits();
+      }
+    };
+
+    // Delete habit
+    window.deleteHabit = function(index) {
+      habits.splice(index, 1);
+      saveHabits();
+      renderHabits();
+    };
+
+    // Initial render
+    renderHabits();
+  </script>
+</body>
+</html>
