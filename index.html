@@ -43,14 +43,6 @@
       return days;
     }
 
-    // Check if today is the last day of the month
-    function isLastDayOfMonth() {
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(today.getDate() + 1);
-      return tomorrow.getDate() === 1;
-    }
-
     // Mark today as complete
     function markToday(index) {
       const today = new Date().toDateString();
@@ -95,14 +87,13 @@
       renderHabits();
     }
 
-    // Reset habit completions for the month
+    // Reset habit completions
     function resetMonthly(index) {
-      if (isLastDayOfMonth()) {
+      const confirmReset = confirm('Are you sure you want to reset all completions for this habit?');
+      if (confirmReset) {
         habits[index].completedDays = [];
         saveHabits();
         renderHabits();
-      } else {
-        alert('Monthly reset is only available on the last day of the month.');
       }
     }
 
@@ -111,7 +102,6 @@
       const habitList = document.getElementById('habitList');
       habitList.innerHTML = '';
       const days = getPastDays();
-      const canReset = isLastDayOfMonth();
 
       habits.forEach((habit, index) => {
         const habitDiv = document.createElement('div');
@@ -146,7 +136,6 @@
         const resetMonthlyButton = document.createElement('button');
         resetMonthlyButton.className = 'bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600';
         resetMonthlyButton.textContent = 'Reset Monthly';
-        resetMonthlyButton.disabled = !canReset;
         resetMonthlyButton.addEventListener('click', () => resetMonthly(index));
 
         buttonDiv.appendChild(markTodayButton);
