@@ -43,11 +43,75 @@
       return days;
     }
 
+    // Check if today is the last day of the month
+    function isLastDayOfMonth() {
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      return tomorrow.getDate() === 1;
+    }
+
+    // Mark today as complete
+    function markToday(index) {
+      const today = new Date().toDateString();
+      if (!habits[index].completedDays) {
+        habits[index].completedDays = [];
+      }
+      if (!habits[index].completedDays.includes(today)) {
+        habits[index].completedDays.push(today);
+        saveHabits();
+        renderHabits();
+      }
+    }
+
+    // Unmark a specific date
+    function unmarkDate(index) {
+      const dateInput = prompt('Enter date to unmark (YYYY-MM-DD):');
+      if (dateInput) {
+        try {
+          const date = new Date(dateInput);
+          if (isNaN(date.getTime())) {
+            alert('Invalid date format. Please use YYYY-MM-DD.');
+            return;
+          }
+          const dayStr = date.toDateString();
+          if (habits[index].completedDays && habits[index].completedDays.includes(dayStr)) {
+            habits[index].completedDays = habits[index].completedDays.filter(d => d !== dayStr);
+            saveHabits();
+            renderHabits();
+          } else {
+            alert('This date was not marked as completed.');
+          }
+        } catch (e) {
+          alert('Invalid date format. Please use YYYY-MM-DD.');
+        }
+      }
+    }
+
+    // Delete habit
+    function deleteHabit(index) {
+      habits.splice(index, 1);
+      saveHabits();
+      renderHabits();
+    }
+
+    // Reset habit completions for the month
+    function resetMonthly(index) {
+      if (isLastDayOfMonth()) {
+        habits[index].completedDays = [];
+        saveHabits();
+        renderHabits();
+      } else {
+        alert('Monthly reset is only available on the last day of the month.');
+      }
+    }
+
     // Render habits
     function renderHabits() {
       const habitList = document.getElementById('habitList');
       habitList.innerHTML = '';
       const days = getPastDays();
+      const canReset = isLastDayOfMonth();
 
       habits.forEach((habit, index) => {
         const habitDiv = document.createElement('div');
@@ -56,13 +120,42 @@
         // Habit name and controls
         const habitHeader = document.createElement('div');
         habitHeader.className = 'flex justify-between items-center mb-4';
-        habitHeader.innerHTML = `
-          <h3 class="text-lg font-semibold">${habit.name}</h3>
-          <div class="flex gap-2">
-            <button onclick="markToday(${index})" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">Mark Today</button>
-            <button onclick="deleteHabit(${index})" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Delete</button>
-          </div>
-        `;
+        
+        const habitTitle = document.createElement('h3');
+        habitTitle.className = 'text-lg font-semibold';
+        habitTitle.textContent = habit.name;
+
+        const buttonDiv = document.createElement('div');
+        buttonDiv.className = 'flex gap-2 flex-wrap';
+
+        const markTodayButton = document.createElement('button');
+        markTodayButton.className = 'bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600';
+        markTodayButton.textContent = 'Mark Today';
+        markTodayButton.addEventListener('click', () => markToday(index));
+
+        const unmarkDateButton = document.createElement('button');
+        unmarkDateButton.className = 'bg-purple-500 text-white px-3 py-1 rounded hover:bg-purple-600';
+        unmarkDateButton.textContent = 'Unmark Date';
+        unmarkDateButton.addEventListener('click', () => unmarkDate(index));
+
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600';
+        deleteButton.textContent = 'Delete';
+        deleteButton.addEventListener('click', () => deleteHabit(index));
+
+        const resetMonthlyButton = document.createElement('button');
+        resetMonthlyButton.className = 'bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600';
+        resetMonthlyButton.textContent = 'Reset Monthly';
+        resetMonthlyButton.disabled = !canReset;
+        resetMonthlyButton.addEventListener('click', () => resetMonthly(index));
+
+        buttonDiv.appendChild(markTodayButton);
+        buttonDiv.appendChild(unmarkDateButton);
+        buttonDiv.appendChild(deleteButton);
+        buttonDiv.appendChild(resetMonthlyButton);
+
+        habitHeader.appendChild(habitTitle);
+        habitHeader.appendChild(buttonDiv);
 
         // Habit grid
         const grid = document.createElement('div');
@@ -94,26 +187,6 @@
         document.getElementById('habitName').value = '';
       }
     });
-
-    // Mark today as complete
-    window.markToday = function(index) {
-      const today = new Date().toDateString();
-      if (!habits[index].completedDays) {
-        habits[index].completedDays = [];
-      }
-      if (!habits[index].completedDays.includes(today)) {
-        habits[index].completedDays.push(today);
-        saveHabits();
-        renderHabits();
-      }
-    };
-
-    // Delete habit
-    window.deleteHabit = function(index) {
-      habits.splice(index, 1);
-      saveHabits();
-      renderHabits();
-    };
 
     // Initial render
     renderHabits();
